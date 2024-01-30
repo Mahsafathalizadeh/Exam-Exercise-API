@@ -1,0 +1,73 @@
+ public class ExamCategoryDto : BaseDto<ExamCategoryDto,ExamCategory>
+ {
+     public string Name { get; set; }
+ }
+----------------------------------------------------------------------
+public class ExamDto:BaseDto<ExamDto,Exam>
+{
+    //basic prop of each exam
+    public string Name { get; set; }
+    public int Duration { get; set; }
+    public DateTime StartTime { get; set; }
+    //an exam has a list of questions
+    public List<QuestionDto> Questions { get; set; }
+    //which category the exam belongs to
+    public string ExamCategoryName { get; set; }
+    public Guid ExamCategoryId { get; set; }
+}
+--------------------------------------------------------------------
+public class QuestionDto : BaseDto<QuestionDto,Question>
+{
+    //which exam the question belongs to
+    public string ExamName { get; set; }
+    public Guid ExamId { get; set; }
+    //what is the question?
+    public string Content { get; set; }
+    //what are the answers?
+    public string Choice1 { get; set; }
+    public string Choice2 { get; set; }
+    public string Choice3 { get; set; }
+    public string Choice4 { get; set; }
+    //what is the true answer
+    public int Answer { get; set; }
+    //what is the level of question?
+    public QuestionLevel Level { get; set; }
+}
+-------------------------------------------------------------------
+public class ResultDto
+{
+    //which user and exam the result is about?
+    public UserDto User { get; set; }
+    public ExamDto Exam { get; set; }
+    
+    //scores
+    public int TotalScore { get; set; }
+    public int UserScore { get; set; }
+
+    //how many wrong and right answers
+    public int WrongCount { get; set; }
+    public int RightCount { get; set; }
+
+}
+---------------------------------------------------------------------
+public class UserChoiceDto : BaseDto<UserChoiceDto,UserChoice>
+{
+    //which user is answering
+    public string UserUserName { get; set; }
+    public Guid UserId { get; set; }
+    //which question the answer belongs to?
+    public string QuestionContent { get; set; }
+    public Guid QuestionId { get; set; }
+    //user's answer
+    public int UserAnswer { get; set; }
+}
+------------------------------------------------------------------
+public class UserExamDto : BaseDto<UserExamDto,UserExam>
+{
+    //which user is signing up for the exam
+    public string UserUserName { get; set; }
+    public Guid UserId { get; set; }
+    //which exam the user is gonna sign up for?
+    public string ExamName { get; set; }
+    public Guid ExamId { get; set; }
+}
