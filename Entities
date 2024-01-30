@@ -1,0 +1,12 @@
+public class Exam : BaseEntity
+{
+    //basic prop of each exam
+    public string Name { get; set; }
+    public int Duration { get; set; }
+    public DateTime StartTime { get; set; }
+    //an exam has a list of questions
+    public ICollection<Question> Questions { get; set; }
+    //which category the exam belongs to
+    public ExamCategory ExamCategory { get; set; }
+    public Guid ExamCategoryId { get; set; }
+}
