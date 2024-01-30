@@ -1,0 +1,214 @@
+using Admin.Models;
+using API.Models.ExamDto;
+using AutoMapper;
+using AutoMapper.QueryableExtensions;
+using Data.Repositories;
+using Entities;
+using Entities.Exam;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using WebFramework.Api;
+
+namespace API.Controllers.v1
+{
+    [ApiVersion("1")]
+    public class ExamController : BaseController
+    {
+        public readonly IRepository<Exam> ExamRepo;
+        public readonly IRepository<ExamCategory> ExamCategoryRepo;
+        public readonly IRepository<Question> QuestionRepo;
+        public readonly IRepository<UserExam> UserExamRepo;
+        public readonly IRepository<UserChoice> UserChoiceRepo;
+        public readonly UserManager<User> UserManager;
+        public readonly IMapper mapper;
+
+        public ExamController(IRepository<Exam> examRepo, IRepository<ExamCategory> examCategoryRepo, IRepository<Question> questionRepo, IRepository<UserExam> userExamRepo, IRepository<UserChoice> userChoiceRepo, UserManager<User> userManager, IMapper mapper)
+        {
+            ExamRepo = examRepo;
+            ExamCategoryRepo = examCategoryRepo;
+            QuestionRepo = questionRepo;
+            UserExamRepo = userExamRepo;
+            UserChoiceRepo = userChoiceRepo;
+            UserManager = userManager;
+            this.mapper = mapper;
+        }
+        [HttpPost("[action]")]
+        public async Task<ApiResult> CreateUpdateExamCtegory(ExamCategoryDto Dto)
+        {
+            if (Dto.Id != Guid.Empty)
+            {
+                var model = await ExamCategoryRepo.TableNoTracking.FirstOrDefaultAsync(x => x.Id == Dto.Id);
+                model = Dto.ToEntity(mapper, model);
+                ExamCategoryRepo.Add(model);
+            }
+            else
+            {
+                var model = Dto.ToEntity(mapper);
+                ExamCategoryRepo.Add(model);
+            }
+            return Ok();
+        }
+        [HttpGet("[action]")]
+        public async Task<ApiResult<List<ExamCategoryDto>>> ListExamCategory()
+        {
+            var ListExamCategory = await ExamCategoryRepo.TableNoTracking.ProjectTo<ExamCategoryDto>(mapper.ConfigurationProvider).ToListAsync();
+            return Ok(ListExamCategory);
+        }
+
+        [HttpPost("[action]")]
+        public async Task<ApiResult> CreateUpdateExam(ExamDto Dto)
+        {
+            if (Dto.Id != Guid.Empty)
+            {
+                var model = await ExamRepo.TableNoTracking.FirstOrDefaultAsync(x => x.Id == Dto.Id);
+                model = Dto.ToEntity(mapper, model);
+                ExamRepo.Add(model);
+            }
+            else
+            {
+                var model = Dto.ToEntity(mapper);
+                ExamRepo.Add(model);
+            }
+            return Ok();
+        }
+        [HttpGet("[action]")]
+        public async Task<ApiResult<List<ExamDto>>> ListExam()
+        {
+            var ListExam = await ExamRepo.TableNoTracking.ProjectTo<ExamDto>(mapper.ConfigurationProvider).ToListAsync();
+            return Ok(ListExam);
+        }
+        [HttpPost("[action]")]
+        public async Task<ApiResult> CreateUpdateQuestion(QuestionDto Dto)
+        {
+            if (Dto.Id != Guid.Empty)
+            {
+                var model = await QuestionRepo.TableNoTracking.FirstOrDefaultAsync(x => x.Id == Dto.Id);
+                model = Dto.ToEntity(mapper, model);
+                QuestionRepo.Add(model);
+            }
+            else
+            {
+                var model = Dto.ToEntity(mapper);
+                QuestionRepo.Add(model);
+            }
+            return Ok();
+        }
+        [HttpGet("[action]")]
+        public async Task<ApiResult<List<QuestionDto>>> ListQuestion()
+        {
+            var ListQuestion = await QuestionRepo.TableNoTracking.ProjectTo<QuestionDto>(mapper.ConfigurationProvider).ToListAsync();
+            return Ok(ListQuestion);
+        }
+        [HttpGet("[action]")]
+        public async Task<ApiResult<List<UserDto>>> ListUser()
+        {
+            var ListUsers = await UserManager.Users.ProjectTo<UserDto>(mapper.ConfigurationProvider).ToListAsync();
+            return Ok(ListUsers);
+        }
+        [HttpPost("[action]")]
+        public async Task<ApiResult> CreateUpdateUserExam(UserExamDto Dto)
+        {
+            if (Dto.Id != Guid.Empty)
+            {
+                var model = await UserExamRepo.TableNoTracking.FirstOrDefaultAsync(x => x.Id == Dto.Id);
+                model = Dto.ToEntity(mapper, model);
+                UserExamRepo.Add(model);
+            }
+            else
+            {
+                var model = Dto.ToEntity(mapper);
+                UserExamRepo.Add(model);
+            }
+            return Ok();
+        }
+        [HttpGet("[action]")]
+        public async Task<ApiResult<List<UserExamDto>>> ListUserExam()
+        {
+            var ListUserExam = await UserExamRepo.TableNoTracking.ProjectTo<UserExamDto>(mapper.ConfigurationProvider).ToListAsync();
+            return Ok(ListUserExam);
+        }
+        [HttpPost("[action]")]
+        public async Task<ApiResult> CreateUpdateUserChoice(UserChoiceDto Dto)
+        {
+            if (Dto.Id != Guid.Empty)
+            {
+                var model = await UserChoiceRepo.TableNoTracking.FirstOrDefaultAsync(x => x.Id == Dto.Id);
+                model = Dto.ToEntity(mapper, model);
+                UserChoiceRepo.Add(model);
+            }
+            else
+            {
+                var model = Dto.ToEntity(mapper);
+                UserChoiceRepo.Add(model);
+            }
+            return Ok();
+        }
+        [HttpGet("[action]")]
+        public async Task<ApiResult<List<UserChoiceDto>>> ListUserChoice()
+        {
+            var ListUserChoice = await UserChoiceRepo.TableNoTracking.ProjectTo<UserChoiceDto>(mapper.ConfigurationProvider).ToListAsync();
+            return Ok(ListUserChoice);
+        }
+        [HttpGet("[action]")]
+        public async Task<ApiResult<ResultDto>> Result(Guid UserId,Guid ExamId)
+        {
+            var model = new ResultDto();
+            model.User = await UserManager.Users.ProjectTo<UserDto>(mapper.ConfigurationProvider).FirstOrDefaultAsync(x => x.Id == UserId);
+            model.Exam = await ExamRepo.TableNoTracking.ProjectTo<ExamDto>(mapper.ConfigurationProvider).FirstOrDefaultAsync(x => x.Id == ExamId);
+            model.UserScore = 0;
+            foreach (var item in model.Exam.Questions)
+            {
+                var UserChoice = await UserChoiceRepo.TableNoTracking.ProjectTo<UserChoiceDto>(mapper.ConfigurationProvider).FirstOrDefaultAsync(x => x.UserId == UserId && x.QuestionId == item.Id);  
+                
+                if (item.Level == Entities.Constants.QuestionLevel.Easy)
+                {
+                    if (item.Answer == UserChoice.UserAnswer)
+                    {
+                        model.UserScore += 1;
+                        model.RightCount++;
+                    }
+                    else
+                    {
+                        model.WrongCount++;                        
+                    }
+                    model.TotalScore += 1;
+                }
+                else if (item.Level == Entities.Constants.QuestionLevel.Medium)
+                {
+                    if (item.Answer == UserChoice.UserAnswer)
+                    {
+                        model.UserScore += 3;
+                        model.RightCount++;
+                    }
+                    else
+                    {
+                        model.WrongCount++;
+
+                    }
+                    model.TotalScore += 3;
+                }
+                else
+                {
+                    if (item.Answer == UserChoice.UserAnswer)
+                    {
+                        model.UserScore += 5;
+                        model.RightCount++;
+                    }
+                    else
+                    {
+                        model.WrongCount++;
+
+                    }
+                    model.TotalScore += 5;
+                }
+                
+            }
+            return Ok(model);
+
+        }
+    }
+}
